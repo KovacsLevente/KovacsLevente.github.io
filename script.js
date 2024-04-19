@@ -1,5 +1,5 @@
 const languages = ["USA / CA","AU / IE / UK","DE / CH","FR","NL","SE","ES/MX","NO","DK","IT","FI"];
-var baseURL = 'https://raw.githubusercontent.com/KovacsLevente/name_gen_source/main/sources/';
+var baseURL = 'https://raw.githubusercontent.com/KovacsLevente/KovacsLevente.github.io/main/sources/';
 
 var options = [
     "Personalization",
