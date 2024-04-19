@@ -103,13 +103,13 @@ function generateName(formData) {
         
         options.forEach(function(option) {
             var optionTemp = csvToArray(csvData[option]);
-            // Remove linebreak from last element (FI), hopefully crossplatform this time
-            optionTemp[0][optionTemp[0].length - 1] = optionTemp[0][optionTemp[0].length - 1].replace(/(\r\n|\n|\r)/gm, "");
+            // Remove linebreak from last element (FI)
+            optionTemp[0][optionTemp[0].length - 1] = optionTemp[0][optionTemp[0].length - 1].trim();
             var languageIndex = optionTemp[0].indexOf(language);
             var selectedIndex = 0;
 
             optionTemp.forEach(function(row, index) {
-                if (row[0] === formData.get(option)) {
+                if (row[0].trim() === formData.get(option)) {
                     selectedIndex = index;
                 }
             });
