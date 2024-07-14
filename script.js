@@ -1,5 +1,39 @@
 const languages = ["USA / CA","AU / IE / UK","DE / CH","FR","NL","SE","ES/MX","NO","DK","IT","FI"];
-var baseURL = 'https://raw.githubusercontent.com/levente-tg/namegen_source/main/';
+//var baseURL = 'https://technologies-resources.s3.eu-west-1.amazonaws.com/sr-tools/name-gen/sources/';
+var baseURL = 'https://raw.githubusercontent.com/KovacsLevente/KovacsLevente.github.io/main/sources/';
+
+var supportedLang = {
+    "USA / CA" : true,
+    "AU / IE / UK" : true,
+    "DE / CH" : true,
+    "FR" : false,
+    "NL" : false,
+    "SE" : false,
+    "ES/MX" : false,
+    "NO" : false,
+    "DK" : false,
+    "IT" : false,
+    "FI" : false
+}
+
+var genderedLang = {
+    "USA / CA" : false,
+    "AU / IE / UK" : false,
+    "DE / CH" : true,
+    "FR" : false,
+    "NL" : false,
+    "SE" : false,
+    "ES/MX" : false,
+    "NO" : false,
+    "DK" : false,
+    "IT" : false,
+    "FI" : false
+}
+
+// melyik option van hatással a többire
+var modifierOption = {
+    "DE / CH" : "ProductType"
+}
 
 var options = [
     "Personalization",
@@ -92,33 +126,94 @@ function copyToClipboard(button) {
     document.body.removeChild(textarea);
 }
 
+
+function getOptionTemp(option) {
+    var optionTemp = csvToArray(csvData[option]);
+    // Remove linebreak from last element (FI)
+    optionTemp[0][optionTemp[0].length - 1] = optionTemp[0][optionTemp[0].length - 1].trim();
+    return optionTemp;
+}
+
+function findSelectedIndex(optionTemp, option, formData) {
+    var selectedIndex = 0;
+    optionTemp.forEach(function(row, index) {
+        if (row[0].trim() === formData.get(option)) {
+            selectedIndex = index;
+        }
+    });
+    return selectedIndex;
+}
+
+// Generator functions
+function genderedGen(language, formData) {
+    var nameTemp = [language];
+    var generatedTemp = formData.get('freeText');
+    var genderVariable;
+
+    //Get gender variable
+    options.forEach(function(option) {
+        var optionTemp = getOptionTemp(option);
+        var languageIndex = optionTemp[0].indexOf(language);
+        var selectedIndex = findSelectedIndex(optionTemp, option, formData);
+
+        if (option === modifierOption[language]) {
+            var splitTemp = optionTemp[selectedIndex][languageIndex].split('@');
+            genderVariable = splitTemp[0];
+            console.log("GenderVariable: " + genderVariable);
+        }
+    });
+
+    //Generate
+    options.forEach(function(option) {
+        var optionTemp = getOptionTemp(option);
+        var languageIndex = optionTemp[0].indexOf(language);
+        var selectedIndex = findSelectedIndex(optionTemp, option, formData);
+        var selectedText = optionTemp[selectedIndex][languageIndex];
+
+        if (selectedText.includes('#')) {
+            selectedText.split('#').forEach(function(part) {
+                var splitPart = part.split('@');
+                if (splitPart[0] === genderVariable) {
+                    generatedTemp += ' ' + splitPart[1];
+                }
+            });
+        } else if (selectedText.includes('@')) {
+            var splitTemp = selectedText.split('@');
+            generatedTemp += ' ' + splitTemp[1];
+        } else {
+            generatedTemp += ' ' + selectedText;
+        }
+    });
+
+    nameTemp.push(generatedTemp);
+    return nameTemp;
+}
+
+function genderlessGen(language, formData) {
+    var nameTemp = [language];
+    var generatedTemp = formData.get('freeText');
+
+    options.forEach(function(option) {
+        var optionTemp = getOptionTemp(option);
+        var languageIndex = optionTemp[0].indexOf(language);
+        var selectedIndex = findSelectedIndex(optionTemp, option, formData);
+        generatedTemp += ' ' + optionTemp[selectedIndex][languageIndex];
+    });
+
+    nameTemp.push(generatedTemp);
+    return nameTemp;
+}
+// EO Generator functions
+
+
 function generateName(formData) {
     var generatedNames = [];
 
     languages.forEach(function(language) {
-        var nameTemp = [];
-        nameTemp.push(language);
-
-        var generatedTemp = formData.get('freeText');
-        
-        options.forEach(function(option) {
-            var optionTemp = csvToArray(csvData[option]);
-            // Remove linebreak from last element (FI)
-            optionTemp[0][optionTemp[0].length - 1] = optionTemp[0][optionTemp[0].length - 1].trim();
-            var languageIndex = optionTemp[0].indexOf(language);
-            var selectedIndex = 0;
-
-            optionTemp.forEach(function(row, index) {
-                if (row[0].trim() === formData.get(option)) {
-                    selectedIndex = index;
-                }
-            });
-            
-            generatedTemp += ' ' + optionTemp[selectedIndex][languageIndex];
-            
-        });
-        nameTemp.push(generatedTemp);
-        generatedNames.push(nameTemp);
+        if(supportedLang[language]){
+            if(genderedLang[language]) generatedNames.push(genderedGen(language, formData));
+            else generatedNames.push(genderlessGen(language, formData));
+        };
     });
 
     showResult(generatedNames);
